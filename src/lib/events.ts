@@ -28,7 +28,11 @@ export class EventEmitter<TParams extends object> {
 	emit<TKey extends keyof TParams>(event: TKey, param: TParams[TKey]): void {
 		for (const listener of this.listeners) {
 			if (listener.name === event) {
-				listener.fn(param);
+				try {
+					listener.fn(param);
+				} catch (err) {
+					console.error(`Error in listener for event "${String(event)}":`, err);
+				}
 			}
 		}
 	}

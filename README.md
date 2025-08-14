@@ -1,21 +1,28 @@
 # Pomus
 
 Pomus (pomodoro-focus) is a simple but configurable pomodoro timer for deep and focused work.
+[Try it out](https://sviatoslav-hr.github.io/pomus/)
 
 ## Developing
 
-Install dependencies with `pnpm install`, start a development server:
+Install dependencies:
+```sh
+pnpm install
+```
 
+Start a development server:
 ```sh
 pnpm dev
+```
 
-# or start the server and open the app in a new browser tab
+Or start the server and open the app in a new browser tab
+```sh
 pnpm dev --open
 ```
 
 ## Building
 
-To create a production version of your app:
+Build a production version of the app:
 
 ```sh
 pnpm build

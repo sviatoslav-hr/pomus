@@ -1,37 +1,59 @@
 <script lang="ts">
+	import { asset } from '$app/paths';
 	import Button from '$lib/components/Button.svelte';
+	import TimerDisplay from '$lib/components/TimerDispay.svelte';
 	import { PomodoroTimer } from '$lib/pomodoro';
 
 	const timer = new PomodoroTimer({
-		focusMinutes: 120,
+		focusMinutes: 120 / 60 / 24,
 		shortBreakMinutes: 15,
 		longBreakMinutes: 60,
 		shortBreaksCount: 2,
 		startPhase: 'focus'
 	});
-	const HOURS = 1000 * 60 * 60;
-	const MINUTES = 1000 * 60;
-	const SECONDS = 1000;
+
+	let sound: HTMLAudioElement | null = null;
 
 	let currentPhase = $state(timer.currentPhase);
-	let millisecondsLeft = $state(timer.getCurrentPhaseMilliseconds());
-	let hoursLeft = $derived(Math.floor(millisecondsLeft / HOURS));
-	let minutesLeft = $derived(Math.floor((millisecondsLeft - hoursLeft * HOURS) / MINUTES));
-	let secondsLeft = $derived(
-		Math.floor((millisecondsLeft - hoursLeft * HOURS - minutesLeft * MINUTES) / SECONDS)
-	);
+	let isTimerActive = $state(timer.active);
+	let totalMsLeft = $state(timer.getCurrentPhaseMilliseconds());
 
-	timer.events.on('tick', () => {
-		millisecondsLeft = timer.getCurrentPhaseMillisecondsLeft();
+	timer.events.on('started', () => {
+		currentPhase = timer.currentPhase;
+		isTimerActive = timer.active;
 	});
 
-	function padNumber(num: number): string {
-		return num.toString().padStart(2, '0');
+	timer.events.on('stopped', () => {
+		isTimerActive = timer.active;
+	});
+
+	timer.events.on('tick', (e) => {
+		totalMsLeft = e.millisecondsLeft;
+		isTimerActive = timer.active;
+	});
+	timer.events.on('phaseEnded', () => {
+		sound?.play();
+		isTimerActive = timer.active;
+	});
+
+	function handleStartPressed() {
+		timer.start();
+	}
+	function handlePausePressed() {
+		timer.stop();
+	}
+	function handleNextPhasePressed() {
+		timer.start(timer.getNextPhase());
 	}
 </script>
 
-<div class="absolute top-1/2 left-1/2 -translate-1/2 bg-primary-800 p-4">
-	<div>
+<div class="absolute top-1/2 left-1/2 -translate-1/2 rounded bg-primary-800 p-4">
+	<div class="mb-4 flex justify-center gap-4">
+		<Button onClick={handleStartPressed} disabled={isTimerActive}>Start</Button>
+		<Button onClick={handlePausePressed} disabled={!isTimerActive}>Pause</Button>
+		<Button onClick={handleNextPhasePressed}>Next</Button>
+	</div>
+	<div class="mb-4 text-center">
 		{#if currentPhase === 'focus'}
 			Focus
 		{:else if currentPhase === 'shortBreak'}
@@ -40,8 +62,7 @@
 			Long break
 		{/if}
 	</div>
-	{padNumber(hoursLeft)}:{padNumber(minutesLeft)}:{padNumber(secondsLeft)}
-	<div></div>
-	<Button onClick={() => timer.start()}>Start</Button>
-	<Button onClick={() => timer.stop()}>Stop</Button>
+	<TimerDisplay totalMilliseconds={totalMsLeft} />
 </div>
+
+<audio bind:this={sound} class="hidden" src={asset('/alarm.wav')} volume={0.5}></audio>
