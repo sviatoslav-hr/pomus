@@ -4,11 +4,13 @@
 	import TimerDisplay from '$lib/components/TimerDispay.svelte';
 	import { PomodoroTimer } from '$lib/pomodoro';
 
+	// TODO: Add inputs to support custom timer settings
 	const timer = new PomodoroTimer({
-		focusMinutes: 120 / 60 / 24,
+		focusMinutes: 45,
 		shortBreakMinutes: 15,
 		longBreakMinutes: 60,
 		shortBreaksCount: 2,
+		// TODO: It doesn't make sense anymore since we pass phase to the start function
 		startPhase: 'focus'
 	});
 
@@ -43,6 +45,7 @@
 		timer.stop();
 	}
 	function handleNextPhasePressed() {
+		// FIXME: you never get to the long break if you skip phases.
 		timer.start(timer.getNextPhase());
 	}
 </script>
