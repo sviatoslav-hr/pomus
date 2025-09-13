@@ -116,4 +116,11 @@ export class PomodoroTimer {
 			timer.events.emit('paused', undefined);
 		}
 	}
+
+	updateConfig(config: Omit<PomodoroConfig, 'initialPhase'>) {
+		this.focusMinutes = config.focusMinutes;
+		this.shortBreakMinutes = config.shortBreakMinutes;
+		this.longBreakMinutes = config.longBreakMinutes;
+		this.shortBreaksCount = config.shortBreaksCount;
+	}
 }

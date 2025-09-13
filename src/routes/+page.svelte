@@ -3,16 +3,18 @@
 	import Button from '$lib/components/Button.svelte';
 	import TimerDisplay from '$lib/components/TimerDispay.svelte';
 	import TimerForm from '$lib/components/TimerForm.svelte';
-	import { PomodoroTimer } from '$lib/pomodoro';
+	import { PomodoroTimer, type PomodoroConfig } from '$lib/pomodoro';
 
-	// TODO: Add inputs to support custom timer settings
-	const timer = new PomodoroTimer({
-		focusMinutes: 45,
+	let config: PomodoroConfig = {
+		focusMinutes: 1,
 		shortBreakMinutes: 15,
 		longBreakMinutes: 60,
 		shortBreaksCount: 2,
 		initialPhase: 'focus'
-	});
+	};
+
+	// TODO: Add inputs to support custom timer settings
+	const timer = new PomodoroTimer(config);
 	let sound: HTMLAudioElement | null = null;
 
 	let currentPhase = $state(timer.currentPhase);
@@ -47,9 +49,14 @@
 		// FIXME: you never get to the long break if you skip phases.
 		timer.start(timer.getNextPhase());
 	}
+	function handleConfigChanged(config: Omit<PomodoroConfig, 'initialPhase'>) {
+		console.log('handleConfigChanged', { config });
+		timer.updateConfig(config);
+		totalMsLeft = timer.getCurrentPhaseMilliseconds();
+	}
 </script>
 
-<div class="absolute top-1/2 left-1/2 -translate-1/2 rounded bg-primary-800 p-4">
+<div class="absolute top-1/2 left-1/2 -translate-1/2 rounded bg-bg p-4">
 	<div class="mb-4 flex justify-center gap-4">
 		<Button onClick={handleStartPressed} disabled={isTimerActive}>Start</Button>
 		<Button onClick={handlePausePressed} disabled={!isTimerActive}>Pause</Button>
@@ -64,8 +71,8 @@
 			Long break
 		{/if}
 	</div>
-	<TimerDisplay totalMilliseconds={totalMsLeft} />
-	<TimerForm />
+	<TimerDisplay totalMilliseconds={totalMsLeft} class="text-text" />
+	<TimerForm initialValue={config} onchange={handleConfigChanged} class="mt-4" />
 </div>
 
-<audio bind:this={sound} class="hidden" src={asset('/alarm.wav')} volume={0.5}></audio>
+<audio bind:this={sound} class="hidden" src={asset('/alarm-twice.wav')} volume={0.7}></audio>
