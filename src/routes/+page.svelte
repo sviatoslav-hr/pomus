@@ -2,6 +2,7 @@
 	import { asset } from '$app/paths';
 	import Button from '$lib/components/Button.svelte';
 	import TimerDisplay from '$lib/components/TimerDispay.svelte';
+	import TimerForm from '$lib/components/TimerForm.svelte';
 	import { PomodoroTimer } from '$lib/pomodoro';
 
 	// TODO: Add inputs to support custom timer settings
@@ -10,10 +11,8 @@
 		shortBreakMinutes: 15,
 		longBreakMinutes: 60,
 		shortBreaksCount: 2,
-		// TODO: It doesn't make sense anymore since we pass phase to the start function
-		startPhase: 'focus'
+		initialPhase: 'focus'
 	});
-
 	let sound: HTMLAudioElement | null = null;
 
 	let currentPhase = $state(timer.currentPhase);
@@ -25,7 +24,7 @@
 		isTimerActive = timer.active;
 	});
 
-	timer.events.on('stopped', () => {
+	timer.events.on('paused', () => {
 		isTimerActive = timer.active;
 	});
 
@@ -42,7 +41,7 @@
 		timer.start();
 	}
 	function handlePausePressed() {
-		timer.stop();
+		timer.pause();
 	}
 	function handleNextPhasePressed() {
 		// FIXME: you never get to the long break if you skip phases.
@@ -66,6 +65,7 @@
 		{/if}
 	</div>
 	<TimerDisplay totalMilliseconds={totalMsLeft} />
+	<TimerForm />
 </div>
 
 <audio bind:this={sound} class="hidden" src={asset('/alarm.wav')} volume={0.5}></audio>

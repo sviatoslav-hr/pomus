@@ -5,7 +5,7 @@ export interface PomodoroConfig {
 	shortBreakMinutes: number;
 	shortBreaksCount: number;
 	longBreakMinutes: number;
-	startPhase: PomodoroPhase;
+	initialPhase: PomodoroPhase;
 }
 
 export type PomodoroPhase = 'focus' | 'shortBreak' | 'longBreak';
@@ -19,7 +19,7 @@ type IntervalId = ReturnType<typeof setInterval>;
 
 interface PomodoroEvents {
 	started: void;
-	stopped: void;
+	paused: void;
 	tick: { millisecondsLeft: number };
 	phaseEnded: { prev: PomodoroPhase; next: PomodoroPhase };
 }
@@ -34,7 +34,7 @@ export class PomodoroTimer {
 	currentPhase: PomodoroPhase;
 
 	millisecondsPassed: number = 0;
-	shortBreaksPassed: number = 0;
+	shortBreaksDone: number = 0;
 	intervalId: IntervalId | null = null;
 
 	constructor(config: PomodoroConfig) {
@@ -42,7 +42,7 @@ export class PomodoroTimer {
 		this.shortBreakMinutes = config.shortBreakMinutes;
 		this.shortBreaksCount = config.shortBreaksCount;
 		this.longBreakMinutes = config.longBreakMinutes;
-		this.currentPhase = config.startPhase;
+		this.currentPhase = config.initialPhase;
 	}
 
 	get active(): boolean {
@@ -71,15 +71,18 @@ export class PomodoroTimer {
 			case 'longBreak':
 				return 'focus';
 			case 'focus':
-				return this.shortBreaksPassed >= this.shortBreaksCount ? 'longBreak' : 'shortBreak';
+				return this.shortBreaksDone >= this.shortBreaksCount ? 'longBreak' : 'shortBreak';
 		}
 	}
 
 	start(phase: PomodoroPhase = this.currentPhase) {
 		const timer = this;
-		if (timer.intervalId) timer.stop();
-		this.currentPhase = phase;
+		if (timer.intervalId) timer.pause();
 		timer.millisecondsPassed = 0;
+		timer.currentPhase = phase;
+		if (phase === 'shortBreak') {
+			timer.shortBreaksDone++;
+		}
 
 		let lastTime = Date.now();
 		timer.intervalId = setInterval(() => {
@@ -92,9 +95,6 @@ export class PomodoroTimer {
 			if (millisecondsLeft <= 0) {
 				if (timer.intervalId) clearInterval(timer.intervalId);
 				timer.millisecondsPassed = 0;
-				if (timer.currentPhase === 'shortBreak') {
-					timer.shortBreaksPassed++;
-				}
 				timer.events.emit('phaseEnded', {
 					prev: timer.currentPhase,
 					next: timer.getNextPhase()
@@ -108,12 +108,12 @@ export class PomodoroTimer {
 		timer.events.emit('started', undefined);
 	}
 
-	stop() {
+	pause() {
 		const timer = this;
 		if (timer.intervalId) {
 			clearInterval(timer.intervalId);
 			timer.intervalId = null;
-			timer.events.emit('stopped', undefined);
+			timer.events.emit('paused', undefined);
 		}
 	}
 }
