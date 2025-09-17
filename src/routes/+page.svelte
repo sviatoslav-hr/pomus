@@ -5,21 +5,23 @@
 	import TimerForm from '$lib/components/TimerForm.svelte';
 	import { PomodoroTimer, type PomodoroConfig } from '$lib/pomodoro';
 
-	let config: PomodoroConfig = {
-		focusMinutes: 1,
+	let config: PomodoroConfig = $state({
+		focusMinutes: 45,
 		shortBreakMinutes: 15,
 		longBreakMinutes: 60,
 		shortBreaksCount: 2,
 		initialPhase: 'focus'
-	};
+	});
 
-	// TODO: Add inputs to support custom timer settings
+	// svelte-ignore state_referenced_locally
 	const timer = new PomodoroTimer(config);
 	let sound: HTMLAudioElement | null = null;
 
 	let currentPhase = $state(timer.currentPhase);
 	let isTimerActive = $state(timer.active);
 	let totalMsLeft = $state(timer.getCurrentPhaseMilliseconds());
+	let isFormActive = $state(false);
+	let showMillis = $state(false);
 
 	timer.events.on('started', () => {
 		currentPhase = timer.currentPhase;
@@ -40,39 +42,58 @@
 	});
 
 	function handleStartPressed() {
+		isFormActive = false;
 		timer.start();
 	}
 	function handlePausePressed() {
+		isFormActive = false;
 		timer.pause();
 	}
 	function handleNextPhasePressed() {
+		isFormActive = false;
 		// FIXME: you never get to the long break if you skip phases.
 		timer.start(timer.getNextPhase());
 	}
-	function handleConfigChanged(config: Omit<PomodoroConfig, 'initialPhase'>) {
-		console.log('handleConfigChanged', { config });
-		timer.updateConfig(config);
+	function handleConfigChanged(value: Omit<PomodoroConfig, 'initialPhase'>) {
+		timer.updateConfig(value);
+		config = { ...config, ...value };
 		totalMsLeft = timer.getCurrentPhaseMilliseconds();
 	}
 </script>
 
-<div class="absolute top-1/2 left-1/2 -translate-1/2 rounded bg-bg p-4">
-	<div class="mb-4 flex justify-center gap-4">
-		<Button onClick={handleStartPressed} disabled={isTimerActive}>Start</Button>
-		<Button onClick={handlePausePressed} disabled={!isTimerActive}>Pause</Button>
-		<Button onClick={handleNextPhasePressed}>Next</Button>
+<div class="p-4 text-4xl font-bold">Pomus</div>
+
+<div
+	class="absolute top-1/2 left-1/2 flex max-w-screen -translate-1/2 flex-row items-start rounded bg-bg"
+>
+	<div class="p-4 pb-6">
+		<div class="mb-4 flex justify-center gap-4">
+			<Button onClick={handleStartPressed} disabled={isTimerActive}>Start</Button>
+			<Button onClick={handlePausePressed} disabled={!isTimerActive}>Pause</Button>
+			<Button onClick={handleNextPhasePressed}>Next</Button>
+			<Button class="text-nowrap" onClick={() => (showMillis = !showMillis)}>
+				{showMillis ? 'Hide' : 'Show'} Millis
+			</Button>
+			<Button onClick={() => (isFormActive = !isFormActive)} disabled={isTimerActive}>
+				{isFormActive ? 'Close' : 'Edit'}
+			</Button>
+		</div>
+		<div class="mb-4 text-center text-4xl">
+			{#if currentPhase === 'focus'}
+				Focus
+			{:else if currentPhase === 'shortBreak'}
+				Short break
+			{:else if currentPhase === 'longBreak'}
+				Long break
+			{/if}
+		</div>
+		<TimerDisplay totalMilliseconds={totalMsLeft} showMilliseconds={showMillis} class="text-text" />
 	</div>
-	<div class="mb-4 text-center">
-		{#if currentPhase === 'focus'}
-			Focus
-		{:else if currentPhase === 'shortBreak'}
-			Short break
-		{:else if currentPhase === 'longBreak'}
-			Long break
-		{/if}
-	</div>
-	<TimerDisplay totalMilliseconds={totalMsLeft} class="text-text" />
-	<TimerForm initialValue={config} onchange={handleConfigChanged} class="mt-4" />
+	{#if isFormActive}
+		<div class="border-l border-border p-4">
+			<TimerForm initialValue={config} onchange={handleConfigChanged} class="mt-4" />
+		</div>
+	{/if}
 </div>
 
 <audio bind:this={sound} class="hidden" src={asset('/alarm-twice.wav')} volume={0.7}></audio>

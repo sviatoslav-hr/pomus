@@ -14,7 +14,7 @@ export const HOURS = 1000 * 60 * 60;
 export const MINUTES = 1000 * 60;
 export const SECONDS = 1000;
 
-const POMODORO_INTERVAL_MS = 100;
+const POMODORO_INTERVAL_MS = 87;
 type IntervalId = ReturnType<typeof setInterval>;
 
 interface PomodoroEvents {

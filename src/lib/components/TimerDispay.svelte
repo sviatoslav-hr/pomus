@@ -5,9 +5,10 @@
 	interface Props {
 		class?: string;
 		totalMilliseconds: number;
+		showMilliseconds?: boolean;
 	}
 
-	let { class: classInput, totalMilliseconds }: Props = $props();
+	let { class: classInput, totalMilliseconds, showMilliseconds = false }: Props = $props();
 
 	let hours = $derived(Math.floor(totalMilliseconds / HOURS));
 	let minutes = $derived(Math.floor((totalMilliseconds - hours * HOURS) / MINUTES));
@@ -23,12 +24,16 @@
 	}
 </script>
 
-<div class={merge('flex justify-center gap-1 text-7xl tabular-nums', classInput)}>
-	<span>{padNumber(hours)}</span>
-	:
+<div class={merge('flex justify-center gap-2 text-8xl font-bold tabular-nums', classInput)}>
+	{#if hours}
+		<span>{padNumber(hours)}</span>
+		:
+	{/if}
 	<span>{padNumber(minutes)}</span>
 	:
 	<span>{padNumber(sounds)}</span>
-	:
-	<span>{padNumber(milliseconds, 3)}</span>
+	{#if showMilliseconds}
+		:
+		<span>{padNumber(milliseconds, 3)}</span>
+	{/if}
 </div>
