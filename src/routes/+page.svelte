@@ -3,7 +3,8 @@
 	import Button from '$lib/components/Button.svelte';
 	import TimerDisplay from '$lib/components/TimerDispay.svelte';
 	import TimerForm from '$lib/components/TimerForm.svelte';
-	import { PomodoroTimer, type PomodoroConfig } from '$lib/pomodoro';
+	import { padNumber } from '$lib/number';
+	import { parseTimer, PomodoroTimer, type ParsedTimer, type PomodoroConfig } from '$lib/pomodoro';
 
 	let config: PomodoroConfig = $state({
 		focusMinutes: 45,
@@ -18,10 +19,22 @@
 	let sound: HTMLAudioElement | null = null;
 
 	let currentPhase = $state(timer.currentPhase);
+	let currentPhaseName = $derived.by(() => {
+		if (currentPhase === 'focus') return 'Focus';
+		if (currentPhase === 'shortBreak') return 'Short Break';
+		if (currentPhase === 'longBreak') return 'Long Break';
+	});
 	let isTimerActive = $state(timer.active);
 	let totalMsLeft = $state(timer.getCurrentPhaseMilliseconds());
 	let isFormActive = $state(false);
 	let showMillis = $state(false);
+	let time: ParsedTimer = $derived(parseTimer(totalMsLeft));
+	let title = $derived.by(() => {
+		if (!isTimerActive) return 'Pomus';
+		return `${time.hours > 0 ? padNumber(time.hours) + ':' : ''}${padNumber(time.minutes)}:${padNumber(
+			time.seconds
+		)} - ${currentPhaseName}`;
+	});
 
 	timer.events.on('started', () => {
 		currentPhase = timer.currentPhase;
@@ -61,7 +74,9 @@
 	}
 </script>
 
-<div class="p-4 text-4xl font-bold">Pomus</div>
+<svelte:head>
+	<title>{title}</title>
+</svelte:head>
 
 <div
 	class="absolute top-1/2 left-1/2 flex max-w-screen -translate-1/2 flex-row items-start rounded bg-bg"
@@ -79,15 +94,9 @@
 			</Button>
 		</div>
 		<div class="mb-4 text-center text-4xl">
-			{#if currentPhase === 'focus'}
-				Focus
-			{:else if currentPhase === 'shortBreak'}
-				Short break
-			{:else if currentPhase === 'longBreak'}
-				Long break
-			{/if}
+			{currentPhaseName}
 		</div>
-		<TimerDisplay totalMilliseconds={totalMsLeft} showMilliseconds={showMillis} class="text-text" />
+		<TimerDisplay timer={time} showMilliseconds={showMillis} class="text-text" />
 	</div>
 	{#if isFormActive}
 		<div class="border-l border-border p-4">

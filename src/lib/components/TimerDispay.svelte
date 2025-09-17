@@ -1,39 +1,27 @@
 <script lang="ts">
-	import { HOURS, MINUTES, SECONDS } from '$lib/pomodoro';
+	import { padNumber } from '$lib/number';
+	import { type ParsedTimer } from '$lib/pomodoro';
 	import { merge } from '$lib/tailwind';
 
 	interface Props {
 		class?: string;
-		totalMilliseconds: number;
 		showMilliseconds?: boolean;
+		timer: ParsedTimer;
 	}
 
-	let { class: classInput, totalMilliseconds, showMilliseconds = false }: Props = $props();
-
-	let hours = $derived(Math.floor(totalMilliseconds / HOURS));
-	let minutes = $derived(Math.floor((totalMilliseconds - hours * HOURS) / MINUTES));
-	let sounds = $derived(
-		Math.floor((totalMilliseconds - hours * HOURS - minutes * MINUTES) / SECONDS)
-	);
-	let milliseconds = $derived(
-		totalMilliseconds - hours * HOURS - minutes * MINUTES - sounds * SECONDS
-	);
-
-	function padNumber(num: number, length = 2): string {
-		return num.toString().padStart(length, '0');
-	}
+	let { class: classInput, timer, showMilliseconds = false }: Props = $props();
 </script>
 
 <div class={merge('flex justify-center gap-2 text-8xl font-bold tabular-nums', classInput)}>
-	{#if hours}
-		<span>{padNumber(hours)}</span>
+	{#if timer.hours}
+		<span>{padNumber(timer.hours)}</span>
 		:
 	{/if}
-	<span>{padNumber(minutes)}</span>
+	<span>{padNumber(timer.minutes)}</span>
 	:
-	<span>{padNumber(sounds)}</span>
+	<span>{padNumber(timer.seconds)}</span>
 	{#if showMilliseconds}
 		:
-		<span>{padNumber(milliseconds, 3)}</span>
+		<span>{padNumber(timer.milliseconds, 3)}</span>
 	{/if}
 </div>

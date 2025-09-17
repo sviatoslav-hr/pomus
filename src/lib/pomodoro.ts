@@ -14,7 +14,7 @@ export const HOURS = 1000 * 60 * 60;
 export const MINUTES = 1000 * 60;
 export const SECONDS = 1000;
 
-const POMODORO_INTERVAL_MS = 87;
+const POMODORO_INTERVAL_MS = 367;
 type IntervalId = ReturnType<typeof setInterval>;
 
 interface PomodoroEvents {
@@ -123,4 +123,20 @@ export class PomodoroTimer {
 		this.longBreakMinutes = config.longBreakMinutes;
 		this.shortBreaksCount = config.shortBreaksCount;
 	}
+}
+
+export interface ParsedTimer {
+	totalMilliseconds: number;
+	hours: number;
+	minutes: number;
+	seconds: number;
+	milliseconds: number;
+}
+
+export function parseTimer(totalMilliseconds: number): ParsedTimer {
+	const hours = Math.floor(totalMilliseconds / HOURS);
+	const minutes = Math.floor((totalMilliseconds - hours * HOURS) / MINUTES);
+	const seconds = Math.floor((totalMilliseconds - hours * HOURS - minutes * MINUTES) / SECONDS);
+	const milliseconds = totalMilliseconds - hours * HOURS - minutes * MINUTES - seconds * SECONDS;
+	return { totalMilliseconds, hours, minutes, seconds, milliseconds };
 }
