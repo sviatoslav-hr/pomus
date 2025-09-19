@@ -12,7 +12,7 @@
 	let { class: classInput, timer, showMilliseconds = false }: Props = $props();
 </script>
 
-<div class={merge('flex justify-center gap-2 text-8xl font-bold tabular-nums', classInput)}>
+<div class={merge('flex justify-center gap-2 text-9xl font-bold tabular-nums', classInput)}>
 	{#if timer.hours}
 		<span>{padNumber(timer.hours)}</span>
 		:
