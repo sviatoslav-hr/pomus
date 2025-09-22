@@ -3,4 +3,4 @@
 High priority:
 
 Medium priority:
-- [ ] Save changed config in local storage
+- [ ] Add sound when timer starts (any phase)

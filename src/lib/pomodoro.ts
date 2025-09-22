@@ -15,6 +15,12 @@ export const HOURS = MINUTES * 60;
 
 const POMODORO_INTERVAL_MS = 367;
 type IntervalId = ReturnType<typeof setInterval>;
+export const defaultPomodorConfig: PomodoroConfig = {
+	focusMinutes: 45,
+	shortBreakMinutes: 15,
+	longBreakMinutes: 60,
+	shortBreaksCount: 2
+};
 
 interface PomodoroEvents {
 	started: void;

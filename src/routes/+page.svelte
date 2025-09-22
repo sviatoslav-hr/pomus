@@ -1,8 +1,15 @@
 <script lang="ts">
+	import { browser } from '$app/environment';
 	import { asset } from '$app/paths';
 	import Button from '$lib/components/Button.svelte';
 	import TimerDisplay from '$lib/components/TimerDispay.svelte';
 	import TimerForm from '$lib/components/TimerForm.svelte';
+	import {
+		defaultAppConfig,
+		readConfigFromStorage,
+		writeConfigToStorage,
+		type ApplicationConfig
+	} from '$lib/config';
 	import { padNumber } from '$lib/number';
 	import {
 		parseTimer,
@@ -12,16 +19,12 @@
 		type PomodoroPhase
 	} from '$lib/pomodoro';
 
-	let config: PomodoroConfig = $state({
-		focusMinutes: 45,
-		shortBreakMinutes: 15,
-		longBreakMinutes: 60,
-		shortBreaksCount: 2,
-		initialPhase: 'focus'
-	});
+	const appConfig: ApplicationConfig =
+		(browser && readConfigFromStorage(localStorage)) || defaultAppConfig;
 
-	// svelte-ignore state_referenced_locally
-	const timer = new PomodoroTimer(config);
+	let config: PomodoroConfig = $state(appConfig.pomodoro);
+
+	const timer = new PomodoroTimer((() => config)());
 	let sound: HTMLAudioElement | null = null;
 
 	let currentPhase = $state(timer.currentPhase);
@@ -31,7 +34,7 @@
 	let isTimerPaused = $state(false);
 	let totalMsLeft = $state(timer.getCurrentPhaseMilliseconds());
 	let isFormActive = $state(false);
-	let showMillis = $state(false);
+	let showMillis = $state(appConfig.showMilliseconds);
 	let time: ParsedTimer = $derived(parseTimer(totalMsLeft));
 	let title = $derived.by(() => {
 		if (!isTimerRunning && !isTimerPaused) return 'Pomus';
@@ -86,10 +89,17 @@
 		currentPhase = timer.currentPhase;
 		totalMsLeft = timer.getCurrentPhaseMilliseconds();
 	}
+	function handleToggleMillis() {
+		showMillis = !showMillis;
+		appConfig.showMilliseconds = showMillis;
+		if (browser) writeConfigToStorage(localStorage, appConfig);
+	}
 	function handleConfigChanged(value: Omit<PomodoroConfig, 'initialPhase'>) {
 		timer.updateConfig(value);
 		config = { ...config, ...value };
+		appConfig.pomodoro = config;
 		totalMsLeft = timer.getCurrentPhaseMilliseconds();
+		if (browser) writeConfigToStorage(localStorage, appConfig);
 	}
 	function getPhaseName(phase: PomodoroPhase): string {
 		switch (phase) {
@@ -119,7 +129,7 @@
 			>
 				Reset
 			</Button>
-			<Button class="min-w-[10rem] text-nowrap" onClick={() => (showMillis = !showMillis)}>
+			<Button class="min-w-[10rem] text-nowrap" onClick={handleToggleMillis}>
 				{showMillis ? 'Hide' : 'Show'} Millis
 			</Button>
 			<Button
